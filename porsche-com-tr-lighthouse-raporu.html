@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lighthouse Analiz Raporu — www.porsche.com.tr</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1a1a2e; line-height: 1.6; background: #f8f9fa; padding: 20px; }
+  .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 20px rgba(0,0,0,0.08); overflow: hidden; }
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; padding: 40px; text-align: center; }
+  .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .header .subtitle { font-size: 16px; opacity: 0.85; }
+  .header .url { font-size: 18px; color: #e94560; font-weight: 600; margin-top: 10px; }
+  .header .date { font-size: 13px; opacity: 0.6; margin-top: 6px; }
+  .section { padding: 30px 40px; border-bottom: 1px solid #eee; }
+  .section:last-child { border-bottom: none; }
+  .section h2 { font-size: 22px; color: #1a1a2e; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 3px solid #e94560; display: inline-block; }
+  .section h3 { font-size: 17px; color: #16213e; margin: 18px 0 10px 0; }
+  
+  /* Score Gauges */
+  .scores-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+  .score-card { text-align: center; padding: 20px 10px; border-radius: 12px; background: #f8f9fa; }
+  .score-card .label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 10px; }
+  .gauge { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 24px; font-weight: 700; color: #fff; }
+  .gauge.good { background: linear-gradient(135deg, #0cce6b, #0aa858); }
+  .gauge.average { background: linear-gradient(135deg, #ffa400, #e69500); }
+  .gauge.poor { background: linear-gradient(135deg, #ff4e42, #d93025); }
+  .gauge.na { background: #999; }
+  .device-label { font-size: 11px; color: #999; margin-top: 4px; }
+  
+  /* Comparison row */
+  .comparison-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+  .device-section { background: #f8f9fa; border-radius: 10px; padding: 20px; }
+  .device-section h3 { margin-top: 0; text-align: center; }
+  .device-section .icon { font-size: 24px; margin-right: 6px; }
+  
+  /* Metrics table */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; font-size: 14px; }
+  th { background: #1a1a2e; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+  tr:hover { background: #f8f9fa; }
+  .score-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; color: #fff; min-width: 36px; text-align: center; }
+  .score-badge.good { background: #0cce6b; }
+  .score-badge.average { background: #ffa400; }
+  .score-badge.poor { background: #ff4e42; }
+  
+  /* Opportunity cards */
+  .opp-card { background: #fff8f0; border-left: 4px solid #ffa400; padding: 12px 16px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+  .opp-card.critical { background: #fff0f0; border-left-color: #ff4e42; }
+  .opp-card .opp-title { font-weight: 600; font-size: 14px; color: #333; }
+  .opp-card .opp-savings { font-size: 13px; color: #666; margin-top: 4px; }
+  
+  /* Resource bar */
+  .resource-bar { display: flex; align-items: center; margin: 6px 0; }
+  .resource-bar .bar-label { width: 120px; font-size: 13px; font-weight: 500; }
+  .resource-bar .bar-track { flex: 1; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; position: relative; }
+  .resource-bar .bar-fill { height: 100%; border-radius: 10px; transition: width 0.3s; }
+  .resource-bar .bar-value { width: 100px; text-align: right; font-size: 12px; color: #666; padding-left: 8px; }
+  
+  /* Info box */
+  .info-box { background: #e8f4fd; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-size: 14px; }
+  .info-box.warning { background: #fff3cd; }
+  .info-box.danger { background: #f8d7da; }
+  .info-box strong { display: block; margin-bottom: 4px; }
+  
+  /* Summary stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 15px 0; }
+  .stat-card { background: #f8f9fa; border-radius: 10px; padding: 15px; text-align: center; }
+  .stat-card .stat-value { font-size: 24px; font-weight: 700; color: #1a1a2e; }
+  .stat-card .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+  
+  /* Third party table */
+  .tp-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+  .tp-name { flex: 1; font-weight: 500; font-size: 14px; }
+  .tp-size { width: 100px; text-align: right; font-size: 13px; color: #666; }
+  .tp-time { width: 100px; text-align: right; font-size: 13px; color: #666; }
+  
+  /* Print styles */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .container { box-shadow: none; border-radius: 0; }
+    .section { page-break-inside: avoid; }
+    .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .gauge, .score-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none; }
+  }
+  
+  .download-btn { display: block; margin: 20px auto; padding: 14px 32px; background: #e94560; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; }
+  .download-btn:hover { background: #d63851; }
+  
+  /* Recommendation section */
+  .rec-card { background: #f0f8ff; border-left: 4px solid #0f3460; padding: 14px 18px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+  .rec-card .rec-priority { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .rec-card .rec-priority.high { background: #ff4e42; }
+  .rec-card .rec-priority.medium { background: #ffa400; }
+  .rec-card .rec-priority.low { background: #0cce6b; }
+  .rec-card .rec-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .rec-card .rec-desc { font-size: 13px; color: #555; }
+  
+  .footnote { text-align: center; font-size: 11px; color: #999; padding: 20px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <h1>🔍 Lighthouse Performans Analiz Raporu</h1>
+  <div class="subtitle">Google Lighthouse ile Detaylı Web Sitesi Analizi</div>
+  <div class="url">www.porsche.com.tr</div>
+  <div class="date">Analiz Tarihi: 3 Nisan 2026 — Masaüstü &amp; Mobil</div>
+</div>
+
+<!-- PDF İndir Butonu -->
+<div class="no-print" style="padding:20px;text-align:center;">
+  <button class="download-btn" onclick="window.print()">📥 PDF Olarak İndir / Yazdır</button>
+  <p style="font-size:12px;color:#999;margin-top:8px;">Tarayıcınızın yazdırma menüsünde "PDF olarak kaydet" seçeneğini kullanın.</p>
+</div>
+
+<!-- YÖNETİCİ ÖZETİ -->
+<div class="section">
+  <h2>📋 Yönetici Özeti</h2>
+  <div class="info-box">
+    <strong>Genel Değerlendirme</strong>
+    www.porsche.com.tr web sitesi, SEO açısından <b>mükemmel (100)</b> ve erişilebilirlik açısından <b>iyi (92)</b> düzeyde performans göstermektedir. 
+    Ancak <b>genel performans puanı hem masaüstünde (48) hem de mobilde (46) düşüktür</b> ve acil iyileştirme gerektirmektedir. 
+    En İyi Uygulamalar puanı (81) de iyileştirmeye açıktır. Özellikle <b>kullanılmayan CSS/JS, küçültülmemiş kaynaklar ve büyük medya dosyaları</b> performansı olumsuz etkileyen başlıca faktörlerdir.
+  </div>
+</div>
+
+<!-- GENEL SKORLAR KARŞILAŞTIRMA -->
+<div class="section">
+  <h2>🏆 Genel Skorlar</h2>
+
+  <div style="margin-bottom:18px;">
+    <div style="font-weight:600;font-size:15px;margin-bottom:8px;">Performans</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+      <span style="width:80px;font-size:13px;color:#666;">🖥️ Masaüstü</span>
+      <div style="flex:1;height:28px;background:#eee;border-radius:14px;overflow:hidden;">
+        <div style="width:48%;height:100%;background:#ff4e42;border-radius:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">48</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="width:80px;font-size:13px;color:#666;">📱 Mobil</span>
+      <div style="flex:1;height:28px;background:#eee;border-radius:14px;overflow:hidden;">
+        <div style="width:46%;height:100%;background:#ff4e42;border-radius:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">46</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-bottom:18px;">
+    <div style="font-weight:600;font-size:15px;margin-bottom:8px;">Erişilebilirlik</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+      <span style="width:80px;font-size:13px;color:#666;">🖥️ Masaüstü</span>
+      <div style="flex:1;height:28px;background:#eee;border-radius:14px;overflow:hidden;">
+        <div style="width:92%;height:100%;background:#0cce6b;border-radius:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">92</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="width:80px;font-size:13px;color:#666;">📱 Mobil</span>
+      <div style="flex:1;height:28px;background:#eee;border-radius:14px;overflow:hidden;">
+        <div style="width:92%;height:100%;background:#0cce6b;border-radius:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">92</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-bottom:18px;">
+    <div style="font-weight:600;font-size:15px;margin-bottom:8px;">En İyi Uygulamalar</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+      <span style="width:80px;font-size:13px;color:#666;">🖥️ Masaüstü</span>
+      <div style="flex:1;height:28px;background:#eee;border-radius:14px;overflow:hidden;">
+        <div style="width:81%;height:100%;background:#ffa400;border-radius:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">81</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="width:80px;font-size:13px;color:#666;">📱 Mobil</span>
+      <div style="flex:1;height:28px;background:#eee;border-radius:14px;overflow:hidden;">
+        <div style="width:81%;height:100%;background:#ffa400;border-radius:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">81</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-bottom:18px;">
+    <div style="font-weight:600;font-size:15px;margin-bottom:8px;">SEO</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+      <span style="width:80px;font-size:13px;color:#666;">🖥️ Masaüstü</span>
+      <div style="flex:1;height:28px;background:#eee;border-radius:14px;overflow:hidden;">
+        <div style="width:100%;height:100%;background:#0cce6b;border-radius:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">100</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="width:80px;font-size:13px;color:#666;">📱 Mobil</span>
+      <div style="flex:1;height:28px;background:#eee;border-radius:14px;overflow:hidden;">
+        <div style="width:100%;height:100%;background:#0cce6b;border-radius:14px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">100</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="info-box">
+    <strong>Puan Skalası</strong>
+    🟢 <b>90–100:</b> İyi &nbsp;&nbsp; 🟠 <b>50–89:</b> İyileştirme Gerekli &nbsp;&nbsp; 🔴 <b>0–49:</b> Kötü
+  </div>
+</div>
+
+<!-- CORE WEB VITALS -->
+<div class="section">
+  <h2>⚡ Core Web Vitals &amp; Performans Metrikleri</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Aşağıdaki tablo, Google'ın arama sıralamasında kullandığı temel performans metriklerini masaüstü ve mobil için karşılaştırmalı olarak göstermektedir.</p>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Metrik</th>
+        <th>🖥️ Masaüstü</th>
+        <th>📱 Mobil</th>
+        <th>Durum</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>İlk İçerikli Boyama (FCP)</strong></td>
+        <td><span class="score-badge average">53</span> 1,5 sn.</td>
+        <td><span class="score-badge poor">0</span> 8,3 sn.</td>
+        <td>🔴</td>
+      </tr>
+      <tr>
+        <td><strong>En Büyük İçerikli Boyama (LCP)</strong></td>
+        <td><span class="score-badge average">56</span> 2,2 sn.</td>
+        <td><span class="score-badge poor">0</span> 10,4 sn.</td>
+        <td>🔴</td>
+      </tr>
+      <tr>
+        <td><strong>Toplam Engelleme Süresi (TBT)</strong></td>
+        <td><span class="score-badge poor">11</span> 770 ms.</td>
+        <td><span class="score-badge average">69</span> 390 ms.</td>
+        <td>🔴</td>
+      </tr>
+      <tr>
+        <td><strong>Kümülatif Düzen Kayması (CLS)</strong></td>
+        <td><span class="score-badge good">100</span> 0,012</td>
+        <td><span class="score-badge good">100</span> 0,006</td>
+        <td>🟢</td>
+      </tr>
+      <tr>
+        <td><strong>Hız Endeksi</strong></td>
+        <td><span class="score-badge poor">3</span> 5,1 sn.</td>
+        <td><span class="score-badge poor">0</span> 18,0 sn.</td>
+        <td>🔴</td>
+      </tr>
+      <tr>
+        <td><strong>Etkileşime Hazır Olma Süresi (TTI)</strong></td>
+        <td><span class="score-badge poor">26</span> 6,1 sn.</td>
+        <td><span class="score-badge poor">0</span> 33,5 sn.</td>
+        <td>🔴</td>
+      </tr>
+      <tr>
+        <td><strong>Maks. Potansiyel İlk Giriş Gecikmesi (FID)</strong></td>
+        <td><span class="score-badge poor">0</span> 1.010 ms.</td>
+        <td><span class="score-badge poor">17</span> 410 ms.</td>
+        <td>🔴</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="info-box warning">
+    <strong>⚠️ Kritik Bulgular</strong>
+    <ul style="margin-left:18px;font-size:13px;">
+      <li><b>Speed Index:</b> Masaüstü 5,1 sn, Mobil 18,0 sn — çok yavaş</li>
+      <li><b>LCP (En Büyük İçerikli Boyama):</b> Masaüstü 2,2 sn (sınırda), Mobil 10,4 sn (kritik)</li>
+      <li><b>TTI (Etkileşim Süresi):</b> Masaüstü 6,1 sn, Mobil 33,5 sn — kullanıcılar uzun süre bekliyor</li>
+      <li><b>TBT (Toplam Engelleme):</b> Masaüstü 770 ms, Mobil 390 ms — JavaScript ana iş parçacığını blokluyor</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <h2>📊 Metrik Açıklamaları</h2>
+
+  <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <div style="font-weight:600;font-size:14px;">İlk İçerikli Boyama (FCP)</div>
+    <div style="font-size:13px;color:#555;margin:4px 0;">Tarayıcının ilk metin veya görsel içeriği ekrana çizdiği süre.</div>
+    <div style="font-size:12px;color:#888;">Masaüstü: 1,5 sn. | Mobil: 8,3 sn.</div>
+  </div>
+  <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <div style="font-weight:600;font-size:14px;">En Büyük İçerikli Boyama (LCP)</div>
+    <div style="font-size:13px;color:#555;margin:4px 0;">Görüntü alanındaki en büyük içerik öğesinin işlendiği süre. Core Web Vitals metriğidir.</div>
+    <div style="font-size:12px;color:#888;">Masaüstü: 2,2 sn. | Mobil: 10,4 sn.</div>
+  </div>
+  <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <div style="font-weight:600;font-size:14px;">Toplam Engelleme Süresi (TBT)</div>
+    <div style="font-size:13px;color:#555;margin:4px 0;">FCP ile TTI arasında ana iş parçacığının engeli altında geçen toplam süre.</div>
+    <div style="font-size:12px;color:#888;">Masaüstü: 770 ms. | Mobil: 390 ms.</div>
+  </div>
+  <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <div style="font-weight:600;font-size:14px;">Kümülatif Düzen Kayması (CLS)</div>
+    <div style="font-size:13px;color:#555;margin:4px 0;">Sayfa yüklenirken meydana gelen beklenmedik düzen kaymalarının toplamı. Core Web Vitals metriğidir.</div>
+    <div style="font-size:12px;color:#888;">Masaüstü: 0,012 | Mobil: 0,006</div>
+  </div>
+  <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <div style="font-weight:600;font-size:14px;">Hız Endeksi</div>
+    <div style="font-size:13px;color:#555;margin:4px 0;">Sayfanın görsel olarak tamamlanma hızını ölçer.</div>
+    <div style="font-size:12px;color:#888;">Masaüstü: 5,1 sn. | Mobil: 18,0 sn.</div>
+  </div>
+  <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <div style="font-weight:600;font-size:14px;">Etkileşime Hazır Olma Süresi (TTI)</div>
+    <div style="font-size:13px;color:#555;margin:4px 0;">Sayfanın tamamen etkileşime hazır olduğu süre.</div>
+    <div style="font-size:12px;color:#888;">Masaüstü: 6,1 sn. | Mobil: 33,5 sn.</div>
+  </div>
+  <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <div style="font-weight:600;font-size:14px;">Maks. Potansiyel İlk Giriş Gecikmesi (FID)</div>
+    <div style="font-size:13px;color:#555;margin:4px 0;">Kullanıcının yaşayabileceği en kötü giriş gecikmesi.</div>
+    <div style="font-size:12px;color:#888;">Masaüstü: 1.010 ms. | Mobil: 410 ms.</div>
+  </div></div>
+
+<div class="section">
+  <h2>🚀 İyileştirme Fırsatları</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Aşağıdaki öneriler uygulandığında sayfa yükleme süresi önemli ölçüde kısalacaktır.</p>
+
+  <div class="comparison-row">
+    <div class="device-section">
+      <h3><span class="icon">🖥️</span>Masaüstü</h3>
+      <div class="opp-card critical">
+        <div class="opp-title">Kullanılmayan JavaScript&#x27;i azaltın</div>
+        <div class="opp-savings">Tahmini tasarruf: 1.133 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Kullanılmayan CSS&#x27;yi azaltın</div>
+        <div class="opp-savings">Tahmini tasarruf: 936 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">CSS&#x27;yi küçültün</div>
+        <div class="opp-savings">Tahmini tasarruf: 180 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">JavaScript&#x27;i küçült</div>
+        <div class="opp-savings">Tahmini tasarruf: 165 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Oluşturma engelleme istekleri</div>
+        <div class="opp-savings">Tahmini tasarruf: 940 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Resim yayınlamayı kolaylaştırın</div>
+        <div class="opp-savings">Tahmini tasarruf: 3.268 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Modern HTTP</div>
+        <div class="opp-savings">Tahmini tasarruf: 160 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Verimli önbellek sürelerini kullanın</div>
+        <div class="opp-savings">Tahmini tasarruf: 27.617 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Eski JavaScript</div>
+        <div class="opp-savings">Tahmini tasarruf: 12 KiB</div>
+      </div>
+    </div>
+    <div class="device-section">
+      <h3><span class="icon">📱</span>Mobil</h3>
+      <div class="opp-card ">
+        <div class="opp-title">Kullanılmayan JavaScript&#x27;i azaltın</div>
+        <div class="opp-savings">Tahmini tasarruf: 1.123 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Kullanılmayan CSS&#x27;yi azaltın</div>
+        <div class="opp-savings">Tahmini tasarruf: 920 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">CSS&#x27;yi küçültün</div>
+        <div class="opp-savings">Tahmini tasarruf: 180 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">JavaScript&#x27;i küçült</div>
+        <div class="opp-savings">Tahmini tasarruf: 165 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Oluşturma engelleme istekleri</div>
+        <div class="opp-savings">Tahmini tasarruf: 5.880 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Resim yayınlamayı kolaylaştırın</div>
+        <div class="opp-savings">Tahmini tasarruf: 4.391 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Modern HTTP</div>
+        <div class="opp-savings">Tahmini tasarruf: 490 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Verimli önbellek sürelerini kullanın</div>
+        <div class="opp-savings">Tahmini tasarruf: 34.498 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Eski JavaScript</div>
+        <div class="opp-savings">Tahmini tasarruf: 12 KiB</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>📦 Kaynak Dağılımı</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Sayfa yüklenirken aktarılan kaynakların türlerine göre dağılımı.</p>
+  
+  <div class="comparison-row">
+    <div class="device-section"><h3>🖥️ Masaüstü</h3>
+      <div class="resource-bar">
+        <div class="bar-label">Toplam</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#1a1a2e;"></div></div>
+        <div class="bar-value">58.9 MB (135)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Medya</div>
+        <div class="bar-track"><div class="bar-fill" style="width:77.1%;background:#e94560;"></div></div>
+        <div class="bar-value">45.4 MB (45)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Görseller</div>
+        <div class="bar-track"><div class="bar-fill" style="width:17.6%;background:#0f3460;"></div></div>
+        <div class="bar-value">10.4 MB (59)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">JavaScript</div>
+        <div class="bar-track"><div class="bar-fill" style="width:3.1%;background:#ffa400;"></div></div>
+        <div class="bar-value">1.9 MB (17)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">CSS</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.6%;background:#0cce6b;"></div></div>
+        <div class="bar-value">991 KB (8)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">HTML Doküman</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.4%;background:#6c5ce7;"></div></div>
+        <div class="bar-value">255 KB (1)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Yazı Tipi</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.1%;background:#00b894;"></div></div>
+        <div class="bar-value">88 KB (3)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Diğer</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.0%;background:#999;"></div></div>
+        <div class="bar-value">69 B (2)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Üçüncü Taraf</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.3%;background:#fd79a8;"></div></div>
+        <div class="bar-value">761 KB (23)</div>
+      </div>
+    </div>
+    <div class="device-section"><h3>📱 Mobil</h3>
+      <div class="resource-bar">
+        <div class="bar-label">Toplam</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#1a1a2e;"></div></div>
+        <div class="bar-value">57.2 MB (142)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Medya</div>
+        <div class="bar-track"><div class="bar-fill" style="width:76.3%;background:#e94560;"></div></div>
+        <div class="bar-value">43.6 MB (47)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Görseller</div>
+        <div class="bar-track"><div class="bar-fill" style="width:18.1%;background:#0f3460;"></div></div>
+        <div class="bar-value">10.4 MB (63)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">JavaScript</div>
+        <div class="bar-track"><div class="bar-fill" style="width:3.2%;background:#ffa400;"></div></div>
+        <div class="bar-value">1.9 MB (17)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">CSS</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.7%;background:#0cce6b;"></div></div>
+        <div class="bar-value">991 KB (8)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">HTML Doküman</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.4%;background:#6c5ce7;"></div></div>
+        <div class="bar-value">255 KB (1)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Yazı Tipi</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.2%;background:#00b894;"></div></div>
+        <div class="bar-value">126 KB (4)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Diğer</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.0%;background:#999;"></div></div>
+        <div class="bar-value">69 B (2)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Üçüncü Taraf</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.4%;background:#fd79a8;"></div></div>
+        <div class="bar-value">798 KB (25)</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="info-box danger">
+    <strong>🔴 Uyarı: Aşırı Büyük Sayfa Boyutu</strong>
+    Toplam sayfa boyutu masaüstünde <b>~60 MB</b>, mobilde <b>~59 MB</b>'dır. Bu son derece yüksektir. 
+    <b>Medya dosyaları (video)</b> toplam boyutun %77'sini oluşturmaktadır. Video dosyalarının optimize edilmesi veya lazy loading uygulanması kritik önemdedir.
+  </div>
+</div>
+
+<div class="section">
+  <h2>🏋️ En Ağır Kaynaklar</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Sayfa yükleme süresini en çok etkileyen dosyalar.</p>
+  <table>
+    <thead><tr><th>Dosya</th><th>Boyut</th></tr></thead>
+    <tbody>
+      <tr><td title="https://cdn.porsche.com.tr/assets/240517_Macan_EXTDF_LoopB2_9-16_CLEAN_Master_1080%20(1).mp4"><small>240517_Macan_EXTDF_LoopB2_9-16_CLEAN_Master_1080%20(1).mp4</small></td><td><b>9.7 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/240517_Macan_EXTDF_LoopB2_16-9_CLEAN_Master_1920%20(1).mp4"><small>240517_Macan_EXTDF_LoopB2_16-9_CLEAN_Master_1920%20(1).mp4</small></td><td><b>7.9 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/911FA/faslider.png"><small>faslider.png</small></td><td><b>5.6 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/Home/macan.mp4"><small>macan.mp4</small></td><td><b>4.5 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/Home/911.mp4"><small>911.mp4</small></td><td><b>4.4 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/Home/panamera.mp4"><small>panamera.mp4</small></td><td><b>4.2 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/Home/cayenne.mp4"><small>cayenne.mp4</small></td><td><b>4.0 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/Home/718.mp4"><small>718.mp4</small></td><td><b>3.5 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/Home/taycan.mp4"><small>taycan.mp4</small></td><td><b>3.2 MB</b></td></tr>
+      <tr><td title="https://cdn.porsche.com.tr/assets/Home/macan.mp4"><small>macan.mp4</small></td><td><b>1.8 MB</b></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>🧵 Ana İş Parçacığı Analizi</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Tarayıcının ana iş parçacığında harcanan sürenin kategorilere göre dağılımı.</p>
+  
+  <div class="comparison-row">
+    <div class="device-section"><h3>🖥️ Masaüstü — Toplam: 4.6 sn</h3>
+      <div class="resource-bar">
+        <div class="bar-label">Diğer</div>
+        <div class="bar-track"><div class="bar-fill" style="width:81.5%;background:#999;"></div></div>
+        <div class="bar-value">3.7 sn (81%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Script Değerlendirme</div>
+        <div class="bar-track"><div class="bar-fill" style="width:10.1%;background:#ffa400;"></div></div>
+        <div class="bar-value">463 ms (10%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Stil & Düzen</div>
+        <div class="bar-track"><div class="bar-fill" style="width:4.3%;background:#0f3460;"></div></div>
+        <div class="bar-value">197 ms (4%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Script Derleme</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.9%;background:#e94560;"></div></div>
+        <div class="bar-value">89 ms (2%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Render/Boyama</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.9%;background:#0cce6b;"></div></div>
+        <div class="bar-value">41 ms (1%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">HTML/CSS Ayrıştırma</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.8%;background:#6c5ce7;"></div></div>
+        <div class="bar-value">37 ms (1%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Çöp Toplama</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.5%;background:#fd79a8;"></div></div>
+        <div class="bar-value">23 ms (1%)</div>
+      </div>
+    </div>
+    <div class="device-section"><h3>📱 Mobil — Toplam: 16.7 sn</h3>
+      <div class="resource-bar">
+        <div class="bar-label">Diğer</div>
+        <div class="bar-track"><div class="bar-fill" style="width:76.3%;background:#999;"></div></div>
+        <div class="bar-value">12.8 sn (76%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Script Değerlendirme</div>
+        <div class="bar-track"><div class="bar-fill" style="width:10.5%;background:#ffa400;"></div></div>
+        <div class="bar-value">1.8 sn (11%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Stil & Düzen</div>
+        <div class="bar-track"><div class="bar-fill" style="width:7.1%;background:#0f3460;"></div></div>
+        <div class="bar-value">1.2 sn (7%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Render/Boyama</div>
+        <div class="bar-track"><div class="bar-fill" style="width:2.4%;background:#0cce6b;"></div></div>
+        <div class="bar-value">396 ms (2%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Script Derleme</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.9%;background:#e94560;"></div></div>
+        <div class="bar-value">311 ms (2%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">Çöp Toplama</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.0%;background:#fd79a8;"></div></div>
+        <div class="bar-value">163 ms (1%)</div>
+      </div>
+      <div class="resource-bar">
+        <div class="bar-label">HTML/CSS Ayrıştırma</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.9%;background:#6c5ce7;"></div></div>
+        <div class="bar-value">143 ms (1%)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>🌐 Üçüncü Taraf Servisleri</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Sayfada kullanılan üçüncü taraf servislerin performans etkisi.</p>
+  <table>
+    <thead><tr><th>Servis</th><th>Transfer Boyutu</th><th>Ana İş Parçacığı Süresi</th></tr></thead>
+    <tbody>
+      <tr><td>Google Tag Manager</td><td>474 KB</td><td>144 ms</td></tr>
+      <tr><td>Facebook</td><td>136 KB</td><td>56 ms</td></tr>
+      <tr><td>porsche.com</td><td>124 KB</td><td>30 ms</td></tr>
+      <tr><td>JSDelivr CDN</td><td>7 KB</td><td>10 ms</td></tr>
+      <tr><td>cookieseal.com</td><td>14 KB</td><td>6 ms</td></tr>
+      <tr><td>storyblok.com</td><td>7 KB</td><td>1 ms</td></tr>
+      <tr><td>Other Google APIs/SDKs</td><td>21 B</td><td>0 ms</td></tr>
+      <tr><td>Google Analytics</td><td>48 B</td><td>0 ms</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>♿ Erişilebilirlik Bulguları</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Erişilebilirlik puanı her iki cihazda da <b>92/100</b> ile iyi düzeydedir. Ancak bazı sorunlar tespit edilmiştir.</p>
+  <table><thead><tr><th>Sorun</th><th>Puan</th></tr></thead><tbody>
+    <tr><td>Bağlantıların ayırt edilebilir adları yok</td><td><span class="score-badge poor">0</span></td></tr>
+    <tr><td>Dokunma hedefleri, yeterli boyut veya boşluğa sahip değil.</td><td><span class="score-badge poor">0</span></td></tr>
+  </tbody></table>
+</div>
+
+<div class="section">
+  <h2>✅ En İyi Uygulamalar Bulguları</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">En iyi uygulamalar puanı: <b>81/100</b></p>
+  <table><thead><tr><th>Sorun</th><th>Puan</th><th>Açıklama</th></tr></thead><tbody>
+    <tr><td>Kullanımdan kaldırılan API&#x27;leri kullanıyor</td><td><span class="score-badge poor">0</span></td><td>1 uyarı bulundu</td></tr>
+    <tr><td>Büyük birinci taraf JavaScript&#x27;te kaynak eşlemeleri eksik</td><td><span class="score-badge poor">0</span></td><td></td></tr>
+  </tbody></table>
+</div>
+
+<div class="section">
+  <h2>🔎 SEO (Arama Motoru Optimizasyonu)</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">SEO puanı: <b>100/100</b> — Mükemmel!</p>
+  <div class="info-box" style="background:#e8f5e9;">
+    <strong>✅ Tüm SEO kontrolleri başarılı:</strong>
+    <ul style="margin-left:18px;font-size:13px;">
+      <li>Meta açıklama mevcut</li>
+      <li>Geçerli &lt;title&gt; etiketi var</li>
+      <li>hreflang etiketi doğru yapılandırılmış</li>
+      <li>robots.txt dosyası geçerli</li>
+      <li>Bağlantılar taranabilir ve açıklayıcı metin içeriyor</li>
+      <li>Sayfa dizine eklenmesine açık</li>
+      <li>Görsellerin alt özellikleri mevcut</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <h2>🔴 Başarısız Performans Denetimleri</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Aşağıdaki denetimler başarısız olmuş veya iyileştirme gerektirmektedir.</p>
+  
+  <div class="comparison-row">
+    <div class="device-section"><h3>🖥️ Masaüstü</h3>
+      <div class="opp-card critical">
+        <div class="opp-title">Verimli önbellek sürelerini kullanın</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 27.617 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Zorunlu yeniden düzenleme</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> </div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Resim yayınlamayı kolaylaştırın</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 3.268 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Modern HTTP</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 160 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Ağ bağımlılık ağacı</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> </div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Oluşturma engelleme istekleri</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 940 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Maksimum Olası İlk Giriş Gecikmesi</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 1.010 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">CSS&#x27;yi küçültün</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 180 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Kullanılmayan CSS&#x27;yi azaltın</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 936 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Kullanılmayan JavaScript&#x27;i azaltın</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 1.133 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Ana iş parçacığı çalışmasını en aza indir</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 4,6 sn.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Sayfa, geri-ileri önbelleğin geri yüklenmesini engelledi</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 3 hata nedeni</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Speed Index</div>
+        <div class="opp-savings"><span class="score-badge poor">3</span> 5,1 sn.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Total Blocking Time</div>
+        <div class="opp-savings"><span class="score-badge poor">11</span> 770 ms.</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Time to Interactive</div>
+        <div class="opp-savings"><span class="score-badge poor">26</span> 6,1 sn.</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Doküman isteğiyle ilgili gecikme</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Tahmini tasarruf: 170 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Eski JavaScript</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Tahmini tasarruf: 12 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">JavaScript&#x27;i küçült</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Tahmini tasarruf: 165 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Çok büyük ağ yüklerinden kaçının</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Toplam boyut 60.359 KiB&#x27;tı</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Resim öğelerinin açıkça belirtilmiş `width` ve `height` değerleri yok</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> </div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">First Contentful Paint</div>
+        <div class="opp-savings"><span class="score-badge average">53</span> 1,5 sn.</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Largest Contentful Paint</div>
+        <div class="opp-savings"><span class="score-badge average">56</span> 2,2 sn.</div>
+      </div>
+    </div>
+    <div class="device-section"><h3>📱 Mobil</h3>
+      <div class="opp-card critical">
+        <div class="opp-title">First Contentful Paint</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 8,3 sn.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Largest Contentful Paint</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 10,4 sn.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Speed Index</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 18,0 sn.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Verimli önbellek sürelerini kullanın</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 34.498 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Zorunlu yeniden düzenleme</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> </div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Resim yayınlamayı kolaylaştırın</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 4.391 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Modern HTTP</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 490 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Ağ bağımlılık ağacı</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> </div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Oluşturma engelleme istekleri</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 5.880 ms.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Time to Interactive</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 33,5 sn.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">CSS&#x27;yi küçültün</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 180 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Kullanılmayan CSS&#x27;yi azaltın</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> Tahmini tasarruf: 920 KiB</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">JavaScript yürütme süresini azaltın</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 2,0 sn.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Ana iş parçacığı çalışmasını en aza indir</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 16,7 sn.</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Sayfa, geri-ileri önbelleğin geri yüklenmesini engelledi</div>
+        <div class="opp-savings"><span class="score-badge poor">0</span> 3 hata nedeni</div>
+      </div>
+      <div class="opp-card critical">
+        <div class="opp-title">Maksimum Olası İlk Giriş Gecikmesi</div>
+        <div class="opp-savings"><span class="score-badge poor">17</span> 410 ms.</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Doküman isteğiyle ilgili gecikme</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Tahmini tasarruf: 170 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Eski JavaScript</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Tahmini tasarruf: 12 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">JavaScript&#x27;i küçült</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Tahmini tasarruf: 165 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Kullanılmayan JavaScript&#x27;i azaltın</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Tahmini tasarruf: 1.123 KiB</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Çok büyük ağ yüklerinden kaçının</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> Toplam boyut 58.545 KiB&#x27;tı</div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Resim öğelerinin açıkça belirtilmiş `width` ve `height` değerleri yok</div>
+        <div class="opp-savings"><span class="score-badge average">50</span> </div>
+      </div>
+      <div class="opp-card ">
+        <div class="opp-title">Total Blocking Time</div>
+        <div class="opp-savings"><span class="score-badge average">69</span> 390 ms.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>💡 Öncelikli İyileştirme Önerileri</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:15px;">Performansı artırmak için öncelik sırasına göre öneriler.</p>
+
+  <div class="rec-card">
+    <span class="rec-priority high">YÜKSEK ÖNCELİK</span>
+    <div class="rec-title">1. Video Dosyalarını Optimize Edin</div>
+    <div class="rec-desc">Sayfada toplam ~47 MB video dosyası yüklenmektedir. Videoları sıkıştırın, WebM/AVIF formatına dönüştürün ve lazy loading uygulayın. Viewport dışındaki videolar için poster image kullanın ve kullanıcı etkileşimine kadar yüklemeyi erteleyin.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority high">YÜKSEK ÖNCELİK</span>
+    <div class="rec-title">2. Kullanılmayan CSS'i Kaldırın</div>
+    <div class="rec-desc">~936 KB kullanılmayan CSS tespit edildi. CSS dosyalarını critical/non-critical olarak ayırın. İlk ekranda gerekli olmayan stilleri async yükleyin. PurgeCSS gibi araçlar kullanın.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority high">YÜKSEK ÖNCELİK</span>
+    <div class="rec-title">3. Kullanılmayan JavaScript'i Azaltın</div>
+    <div class="rec-desc">~1.133 KB kullanılmayan JavaScript tespit edildi. Code splitting uygulayın, kullanılmayan modülleri kaldırın ve dinamik import kullanın. Tree shaking'i etkinleştirin.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority high">YÜKSEK ÖNCELİK</span>
+    <div class="rec-title">4. Render Engelleyen Kaynakları Ortadan Kaldırın</div>
+    <div class="rec-desc">~940 ms (masaüstü) / ~5.880 ms (mobil) tasarruf mümkün. CSS'i kritik ve kritik olmayan olarak ayırın. JavaScript'lere defer/async ekleyin. Kritik CSS'i inline edin.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority medium">ORTA ÖNCELİK</span>
+    <div class="rec-title">5. CSS ve JavaScript Dosyalarını Küçültün (Minify)</div>
+    <div class="rec-desc">CSS'de ~180 KB, JavaScript'te ~165 KB tasarruf mümkün. Build sürecinize minification adımı ekleyin. Terser ve cssnano gibi araçlar kullanın.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority medium">ORTA ÖNCELİK</span>
+    <div class="rec-title">6. HTTP/2 Protokolüne Geçin</div>
+    <div class="rec-desc">Sunucu HTTP/1.1 kullanıyor. HTTP/2 multiplexing ile paralel kaynak yükleme sağlanabilir. ~160 ms (masaüstü) / ~490 ms (mobil) tasarruf mümkün.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority medium">ORTA ÖNCELİK</span>
+    <div class="rec-title">7. Önbellek Stratejisi İyileştirin</div>
+    <div class="rec-desc">~27 KB (masaüstü) / ~34 KB (mobil) önbellek tasarrufu mümkün. Statik kaynaklar için uzun süreli cache-control başlıkları ayarlayın. CDN kullanımını optimize edin.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority medium">ORTA ÖNCELİK</span>
+    <div class="rec-title">8. Görsel Dosyaları Optimize Edin</div>
+    <div class="rec-desc">~10 MB görsel dosya tespit edildi. WebP/AVIF formatına dönüştürün, responsive images kullanın, lazy loading ekleyin. faslider.png (~5.6 MB) özellikle kritik.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority low">DÜŞÜK ÖNCELİK</span>
+    <div class="rec-title">9. Erişilebilirlik Sorunlarını Düzeltin</div>
+    <div class="rec-desc">Bağlantılara ayırt edilebilir ad ekleyin, dokunma hedeflerinin boyutlarını artırın (en az 48x48px). Mobilde ana landmark bölge eksik — &lt;main&gt; etiketi ekleyin.</div>
+  </div>
+
+  <div class="rec-card">
+    <span class="rec-priority low">DÜŞÜK ÖNCELİK</span>
+    <div class="rec-title">10. Kaynak Eşlemelerini (Source Maps) Ekleyin</div>
+    <div class="rec-desc">Birinci taraf JavaScript dosyalarında kaynak eşlemeleri eksik. Bu, hata ayıklamayı zorlaştırır. Build sürecinize source map oluşturmayı ekleyin.</div>
+  </div>
+</div>
+
+<div class="footnote">
+  Bu rapor, Google Lighthouse analiz verileri temel alınarak otomatik olarak oluşturulmuştur.<br>
+  Analiz Tarihi: 3 Nisan 2026 | Lighthouse Sürümü | www.porsche.com.tr<br>
+  © 2026 — Lighthouse Performans Analiz Raporu
+</div>
+
+</div><!-- container -->
+
+</body>
+</html>
